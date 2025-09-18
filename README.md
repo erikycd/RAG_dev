@@ -19,6 +19,6 @@ print("\n✅ ¡RAG listo para ti!")
 
 ### Sources:
 - Langchain: [Documentation](https://python.langchain.com/docs/introduction/)
-
+- OpenNotebook: [Github](https://github.com/lfnovo/open-notebook?tab=readme-ov-file)
 
 
