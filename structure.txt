@@ -1,0 +1,54 @@
+rag_proyecto/
+│
+├── .gitignore
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── structure.txt
+├── pyproject.toml                 # o setup.py
+│
+├── data/                          # datos
+│   ├── raw/                       # datos originales (repos)
+│   ├── processed/                 # datos preprocesados (embeddings)
+│   └── samples/                   # datos de ejemplos
+│
+├── notebooks/                     # Notebooks (Jupyter)
+│   ├── 01_notebook.ipynb
+│   └── 02_notebook.ipynb
+│
+├── src/                           # código fuente
+│   ├── __init__.py
+│   ├── config.py                  # configuración general
+│   ├── main.py                    # script de ejecución principal
+│   │
+│   ├── retrieval/                 # módulo de recuperación
+│   │   ├── __init__.py
+│   │   └── retriever.py           # limpieza, tokenización, embeddings
+│   │
+│   ├── generation/                # módulo generativo (LLM)
+│   │   ├── __init__.py
+│   │   └── generator.py           # conexión con modelo (OpenAI, Llama, etc.)
+│   │
+│   └── indexing/                  # métricas y validación
+│       ├── __init__.py
+│       └── indexer.py
+│	
+├── tests/                         # pruebas unitarias
+│   ├── __init__.py
+│   └── test_retriever.py
+│
+├── configs/                       # archivos YAML/JSON de configuración
+│   └── default_config.yaml
+│
+├── images/                        # imagenes
+│   └── arquitectura.png
+│
+├── docs/                          # documentación del proyecto
+│   ├── arquitectura.md
+│   ├── flujo_rag.md
+│   └── api.md
+│
+└── results/                       # resultados experimentales
+    ├── logs/
+    ├── metrics/
+    └── outputs/
