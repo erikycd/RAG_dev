@@ -1,0 +1,16 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# VSCode
+.vscode/
+
+# Entornos virtuales
+.env/
+venv/
+.envrc
+
+# Archivos de configuración locales
+*.env
+keys.py
