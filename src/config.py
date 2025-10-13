@@ -5,6 +5,7 @@ class RAGConfig:
         self.chunk_size = 3000
         self.chunk_overlap = 200
         # Model parameters
+        #self.embedding_model = "./data/embeddings/all-mpnet-base-v2"
         self.embedding_model = "sentence-transformers/all-mpnet-base-v2"
         self.device = 'cpu'
         self.temperature = 0.7

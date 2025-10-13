@@ -16,9 +16,6 @@ def main(model):
     try:
         # Initialize configuration
         config = RAGConfig()
-        # Set parameters
-        config.temperature = 0.8  # Controls creativity (0.0 to 1.0)
-        config.num_retrieved_docs = 2  # Number of documents to retrieve
         # Load and process documents
         print("Loading documents...")
         doc_processor = DocumentProcessor(config)
