@@ -18,7 +18,7 @@ class LocalRAG(RAGModel):
     def generate_response(self, query: str) -> str:
         retrieved_docs = self.retrieve_context(query)
 
-        # 🧠 Priorizar secciones con contenido relevante
+        # Priorizar secciones con contenido relevante
         retrieved_docs_sorted = sorted(
             retrieved_docs,
             key=lambda d: (
