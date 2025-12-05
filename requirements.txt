@@ -1,42 +1,33 @@
-# Install required libraries for STREAMLIT app
+# RAG Core
+langchain==1.1.0
+langchain-core==1.1.0
+langchain-community==0.2.0
+langchain-openai==0.1.0
 
+# Embeddings / VectorStore
+sentence-transformers==2.7.0
+faiss-cpu==1.8.0
+huggingface-hub>=0.23.0
+
+# Graph-RAG
+neo4j==5.24.0
+scikit-learn==1.5.0
+numpy>=1.26
+
+# PDF Processing
+pymupdf==1.24.7
+pypdf==5.1.0
+
+# ChatGPT client & environment
+openai>=1.33.0
+python-dotenv==1.0.1
+requests==2.29.0
+
+# Streamlit UI (RAG-Naive)
 streamlit==1.35.0
 streamlit-chat==0.1.1
 streamlit-lottie==0.0.5
-PyPDF2==3.0.1
-#langchain==0.0.278
-#openai==0.27.8
-requests==2.29.0
-python-dotenv==1.0.0
-#sentence-transformers==2.2.2
-sentence-transformers
-sentence_transformers
-faiss-cpu
-
-# Core Dependencies
-#streamlit>=1.24.0
-#streamlit-lottie>=0.0.5
-#python-dotenv>=1.0.0
-#requests>=2.28.0
-#pandas>=1.5.0
-#numpy>=1.23.0
-#PyPDF2>=3.0.0
-#altair>=4.2.0
 base64io>=1.0.3
 
-# LangChain and AI/ML
-langchain>=0.1.0
-langchain-community>=0.0.10
-langchain-core>=0.1.0
-langgraph>=0.0.10
-langchain-openai
-openai>=1.0.0
-#sentence-transformers>=2.2.2
-
-# Optional (for local model support)
-#faiss-cpu>=1.7.4  # or faiss-gpu if using GPU
-#chromadb>=0.4.0
-
-# Development (optional)
-#jupyter>=1.0.0
-#ipykernel>=6.0.0
+# Utils
+tqdm
