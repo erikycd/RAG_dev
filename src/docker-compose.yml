@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j_graph
+    ports:
+      - 7474:7474   # Interfaz web
+      - 7687:7687   # Bolt (Python se conecta aquí)
+    environment:
+      NEO4J_AUTH: "neo4j/neo4jpassword"
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_pagecache_size: 1G
+      NEO4J_dbms_memory_heap_initial__size: 1G
+      NEO4J_dbms_memory_heap_max__size: 2G
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  neo4j_data:

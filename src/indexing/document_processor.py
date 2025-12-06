@@ -2,15 +2,20 @@ from typing import List, Optional, Dict
 import os
 import re
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
+from langchain_community.document_loaders import PyMuPDFLoader
 
-from pypdf import PdfReader  # nota: pip install pypdf si se usa en otro ambiente descargar este paquete para no egenrar error
-
+from pypdf import PdfReader
 from src.config import RAGConfig
 
+# -------- Regex para extraer información estructurada --------
+DOI_REGEX = r"10\.\d{4,9}\/[-._;()\/:A-Za-z0-9]+"
+ISSN_REGEX = r"\d{4}-\d{3}[\dX]"
+EMAIL_REGEX = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+ORCID_REGEX = r"https?:\/\/orcid\.org\/[\d\-]{15,}"
 
 class DocumentProcessor:
     """Handle document loading, metadata extraction and processing."""
@@ -32,7 +37,7 @@ class DocumentProcessor:
         6. Parte en chunks
         7. Genera un TXT de verificación con TEXTO + METADATA
         """
-        loader = PyPDFLoader(file_path)
+        loader = PyMuPDFLoader(file_path)
         documents: List[Document] = loader.load()
 
         if not documents:
@@ -53,18 +58,33 @@ class DocumentProcessor:
             abstract=abstract
         )
 
-        # 5) Meter metadata en cada página
+        # --- INYECCIÓN DE METADATA AL TEXTO ---
         for i, d in enumerate(documents):
             d.metadata.update(pdf_metadata)
-            d.metadata["abstract"] = abstract
             d.metadata["tags"] = tags
-
-            # page viene 0-based; lo convertimos a 1-based
-            page_idx = d.metadata.get("page", i)
-            d.metadata["page_number"] = page_idx + 1
+            d.metadata["page_number"] = d.metadata.get("page", i) + 1
             d.metadata["doc_id"] = file_path
 
-        # 6) Chunks
+            section = self._detect_section(d.page_content)
+            d.metadata["section"] = section
+
+            # Convertir metadata en encabezado textual para embeddings
+            metadata_text = []
+
+            if pdf_metadata.get("title"):
+                metadata_text.append(f"Título: {pdf_metadata['title']}")
+            if pdf_metadata.get("author_real"):
+                metadata_text.append(f"Autor: {pdf_metadata['author_real']}")
+            if pdf_metadata.get("year"):
+                metadata_text.append(f"Año: {pdf_metadata['year']}")
+            if pdf_metadata.get("doi"):
+                metadata_text.append(f"DOI: {pdf_metadata['doi']}")
+
+            if metadata_text and i ==0:
+                metadata_block = "\n".join(metadata_text) + "\n\n"
+                d.page_content = metadata_block + d.page_content
+
+        # 6) Chunking
         chunked_docs: List[Document] = self.text_splitter.split_documents(documents)
 
         # 7) TXT de verificación
@@ -87,6 +107,7 @@ class DocumentProcessor:
 
         return chunked_docs
 
+
     def get_embeddings(self) -> HuggingFaceEmbeddings:
         """Initialize and return the embedding model."""
         return HuggingFaceEmbeddings(
@@ -94,70 +115,45 @@ class DocumentProcessor:
             model_kwargs={'device': self.config.device},
             encode_kwargs={'normalize_embeddings': False}
         )
-
-    # -------- METADATA PDF --------
+    
     def _extract_pdf_metadata(self, file_path: str) -> Dict:
-        """
-        Devuelve un diccionario con:
-        - author_pdf  : lo que dice la metadata del PDF (si existe)
-        - title_pdf   : lo que dice la metadata del PDF (si existe)
-        - author_real : autores inferidos del texto de la primera página (si se detectan)
-        - author      : atajo -> author_real si existe, si no author_pdf
-        - title       : por ahora usamos title_pdf (se podría inferir título real después)
-        - year        : año inferido de la fecha de creación (si existe)
-        - source      : ruta del archivo
-        """
         reader = PdfReader(file_path)
         meta = reader.metadata or {}
 
-        # Lo que dice el PDF en su metadata cruda
-        author_meta = getattr(meta, "author", None) or meta.get("/Author")
-        title_meta = getattr(meta, "title", None) or meta.get("/Title")
+        full_first_page = reader.pages[0].extract_text() or ""
 
-        # Texto de la primera página (para inferir autores reales)
-        try:
-            first_page_text = reader.pages[0].extract_text() or ""
-        except Exception:
-            first_page_text = ""
+        # DOI
+        doi_match = re.search(DOI_REGEX, full_first_page)
+        doi = doi_match.group(0) if doi_match else None
 
-        # Autor inferido del contenido
-        author_guessed = self._guess_authors_from_first_page(first_page_text)
+        # ORCID autores
+        orcids = list(set(re.findall(r"https?:\/\/orcid\.org\/[\d\-]{15,}", full_first_page)))
 
-        # Campos "real" (desde el contenido)
-        author_real = author_guessed
+        # Emails
+        emails = re.findall(EMAIL_REGEX, full_first_page)
 
-        # Campo de conveniencia: author el real (contenido) y si no, el del PDF
-        author_final = author_real or author_meta
-        title_final = title_meta  
+        # Año desde fechas tipo: Recibido / Aceptado / Publicado
+        year_match = re.search(r"(19|20)\d{2}", full_first_page)
+        year = int(year_match.group(0)) if year_match else None
 
-        # Año desde la fecha de creación
-        creation_date = (
-            meta.get("/CreationDate")
-            or meta.get("creationdate")
-            or ""
-        )
-        year = None
-        if isinstance(creation_date, str):
-            match = re.search(r"(19|20)\d{2}", creation_date)
-            if match:
-                year = int(match.group(0))
+        # Extraer autores de forma robusta
+        author_real = self._guess_authors_from_first_page(full_first_page)
+
+        # Título real: si hay título en metadata y texto visible
+        title = meta.get("/Title") or "Sin título claro"
 
         return {
             "source": file_path,
-
-            # Campos "crudos" del PDF
-            "author_pdf": author_meta,
-            "title_pdf": title_meta,
-
-            # Campos inferidos del contenido
-            "author_real": author_real,
-
-            # Campos de conveniencia (para filtros genéricos)
-            "author": author_final,
-            "title": title_final,
-
+            "title": title,
+            "author_real": author_real or "Autor no detectado",
             "year": year,
+            "doi": doi,
+            "emails": emails,
+            "orcids": orcids,
+            "issn": meta.get("/ISSN"),
         }
+
+
 
     def _guess_authors_from_first_page(self, text: str) -> Optional[str]:
         """
@@ -243,6 +239,33 @@ class DocumentProcessor:
 
         return None
 
+    def _detect_section(self, text: str) -> str:
+        lower = text.lower()
+
+        sections = {
+            "resumen": "Resumen",
+            "abstract": "Resumen",
+            "summary": "Resumen",
+            "introducción": "Introducción",
+            "introduction": "Introducción",
+            "metodología": "Metodología",
+            "methods": "Metodología",
+            "resultados": "Resultados",
+            "results": "Resultados",
+            "discusión": "Discusión",
+            "discussion": "Discusión",
+            "conclusiones": "Conclusiones",
+            "conclusion": "Conclusiones",
+            "palabras clave": "Palabras clave",
+            "keywords": "Palabras clave"
+        }
+
+        for key, sec in sections.items():
+            if key in lower:
+                return sec
+
+        return "Texto general"
+
     # -------- TAGS --------
     def _generate_tags(self, title: Optional[str], abstract: Optional[str]) -> List[str]:
         text = ((title or "") + " " + (abstract or "")).lower()
@@ -280,3 +303,4 @@ class DocumentProcessor:
             tags.append("general-paper")
 
         return tags
+
