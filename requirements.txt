@@ -1,8 +1,13 @@
-# RAG Core
-langchain==1.1.0
-langchain-core==1.1.0
-langchain-community==0.2.0
-langchain-openai==0.1.0
+# RAG Core (FIXED)
+langchain==0.2.11
+langchain-core==0.2.23
+langchain-community==0.2.10
+langchain-openai==0.1.17
+
+# Pytorch
+torch==2.8.0
+torchvision==0.23.0
+torchaudio==2.8.0
 
 # Embeddings / VectorStore
 sentence-transformers==2.7.0
