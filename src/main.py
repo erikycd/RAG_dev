@@ -22,6 +22,7 @@ def build_naive_rag(config, documents, model_name: str):
     """Construye el RAG-Naive (FAISS + GPT o LOCAL)."""
     from src.generation.gpt_rag import GPTRAG as NaiveGPTRAG
     from src.generation.local_rag import LocalRAG
+    from src.generation.remote_rag import RemoteRAG
 
     model_name = model_name.upper()
 
@@ -29,6 +30,10 @@ def build_naive_rag(config, documents, model_name: str):
         print("Usando modelo LOCAL con RAG-Naive")
         rag = LocalRAG(config, documents)
         used_model = "LOCAL"
+    elif model_name == "REMOTE":
+        print("Usando modelo REMOTE con RAG-Naive")
+        rag = RemoteRAG(config, documents)
+        used_model = "REMOTE"
     else:
         print("Usando modelo GPT con RAG-Naive")
         rag = NaiveGPTRAG(config, documents)
@@ -138,6 +143,7 @@ if __name__ == "__main__":
     python main.py              → naive + GPT (por defecto)
     python main.py naive        → naive + GPT
     python main.py naive local  → naive + LOCAL
+    python main.py naive remote → naive + REMOTE
     python main.py graph        → graph + GPT (con fallback a naive)
     """
     args = sys.argv[1:]

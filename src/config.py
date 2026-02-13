@@ -31,3 +31,14 @@ class RAGConfig:
     # Grafo
     edge_similarity_threshold: float = 0.75
     edge_top_k: int = 5
+
+    # LLM REMOTO (Cliente) - Apunta al PROXY, no directamente a LM Studio
+    llm_base_url: str = os.getenv("LLM_BASE_URL", "http://localhost:8001/v1")
+    llm_api_key: str = os.getenv("LLM_API_KEY", "ESIA3")
+    llm_model_name: str = os.getenv("LLM_MODEL_NAME", "unsloth/deepseek-r1-distill-qwen-7b")
+
+    # === PROXY SERVER ===
+    proxy_port: int = int(os.getenv("PROXY_PORT", "8001"))
+    proxy_api_key: str = os.getenv("PROXY_API_KEY", "ESIA3")
+    lmstudio_url: str = os.getenv("LMSTUDIO_URL", "http://127.0.0.1:1234/v1/chat/completions")
+

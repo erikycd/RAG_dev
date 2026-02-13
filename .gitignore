@@ -10,7 +10,9 @@ __pycache__/
 .env/
 venv/
 .envrc
+src/*.env
 
 # Archivos de configuración locales
 *.env
 keys.py
+raw/
